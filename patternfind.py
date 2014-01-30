@@ -18,23 +18,41 @@ def rad_sort_suffix_array(page, sa=None, i=0):
     return r
 
 
+def internal_cmp(page, x, y, step=20000):
+    """ Buffer so it works nicely """
+    lenx = len(page) - x
+    leny = len(page) - y
+    i = 0
+    for i in range(0, max(lenx, leny), step):
+        if page[x+i:x+i+step] != page[y+i:y+i+step]:
+            return cmp(page[x+i:x+i+step], page[y+i:y+i+step])
+    return 0
+
+
 def suffix_array(page):
-    return sorted(range(len(page)+1), key=lambda x: page[x:])
+    return sorted(range(len(page)+1), cmp=lambda x, y: internal_cmp(page, x, y))
+
+
+def _num_same(s1, s2):
+    """ Lib function presumably call C so for now this is faster than using a loop. """
+    mil = min(len(s1), len(s2))
+    m2 = (mil + 1) / 2
+    if m2 <= 0:
+        return 0
+    if s1[:m2] == s2[:m2]:
+        return m2 + _num_same(s1[m2:], s2[m2:])
+    else:
+        return _num_same(s1[:m2 - 1], s2[:m2 - 1])
 
 
 def lcp_array(page, _suffix_array):
-    def num_same(s1, s2):
-        for i in range(min(len(s1), len(s2))):
-            if s1[i] != s2[i]:
-                return i
-        return min(len(s1), len(s2))
     lcp = [0] * len(_suffix_array)
     for i in range(1, len(_suffix_array)):
-        lcp[i] = num_same(page[_suffix_array[i-1]:], page[_suffix_array[i]:])
+        lcp[i] = _num_same(page[_suffix_array[i-1]:], page[_suffix_array[i]:])
     return lcp
 
 
-def pattern_to_remove(page, sa, lcp, occ=(0, float('inf')), leng=(0, float('inf'))):
+def pattern_to_remove(page, sa, lcp, occ=(2, float('inf')), leng=(2, float('inf'))):
     def get_max_rep_chars():
         m = (-1, -1, -1, -1, -1)
         fr = []
@@ -51,31 +69,41 @@ def pattern_to_remove(page, sa, lcp, occ=(0, float('inf')), leng=(0, float('inf'
     return pat
 
 
-if __name__ == "__main__":
-    if True:
-        st = '\n'
-        st += '<bb>a</bb><cat>\n'
-        st += '<bb>j</bb><dog>\n'
-        st += '<bb>bob</bb><man>\n'
-        st += '<bb>to</bb><go>\n'
-   # with open("/home/david/.cache/ff_searcher/1299603596466798048/1", "r") as f:
-   #     st = f.read()[40330:55000].replace('<b>', '').replace('</b>', '')
+def largetest():
+    print '-----------largetest------------------'
+    #with open("/home/david/.cache/ff_searcher/1299603596466798048/1", "r") as f:
+    #    st = f.read()[40330:75000].replace('<b>', '').replace('</b>', '')
+    with open("only_search.html", "r") as f:
+        st = f.read().replace('<b>', '').replace('</b>', '')
     pats = []
-    for i in range(15):
+    for i in range(150):
         sa = suffix_array(st)
         lcp = lcp_array(st, suffix_array(st))
-        pat = pattern_to_remove(st, sa, lcp, (3, 6), (2, float('inf')))
+        #pat = pattern_to_remove(st, sa, lcp, (3, 6), (2, float('inf')))
+        pat = pattern_to_remove(st, sa, lcp, (4, 20), (5, float('inf')))
         #pat = pattern_to_remove(st, sa, lcp, (12, float('inf')), (15, float('inf')))
-        if '\n' in pat:
-            pat = max(pat.split('\n'), key=lambda kk: len(kk))
         #print st#.replace('\n', '\\n').replace('\t', '\\t')
+        #if '\n' in pat:
+        #    pat = max(pat.split('\n'), key=lambda kk: len(kk))
         if not pat.strip():
             break
         pats.append(pat)
         #print pat.replace('\n', '\\n').replace('\t', '\\t')
-        st = st.replace(pat, '\t')
+        if '\n' in pat:
+            st = st.replace(pat, '##\n')
+        else:
+            st = st.replace(pat, '##')
         #print
     for pat in pats:
         print pat.replace('\n', '\\n')
     print '--------------------------------------'
     print '\n'.join([e.strip() for e in st.split('\n')]).strip()
+
+
+def codetest():
+    return
+    exit()
+
+if __name__ == "__main__":
+    codetest()
+    largetest()
