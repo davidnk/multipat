@@ -1,10 +1,9 @@
 import bisect
 
 
-def internal_cmp(page, x, y, step=20000):
-    """ Buffer so it works nicely """
-    lenx = len(page) - x
-    leny = len(page) - y
+def internal_cmp(page, x, y, step=100):
+    """ Buffer so it works nicely. """
+    lenx, leny = len(page) - x, len(page) - y
     i = 0
     for i in range(0, max(lenx, leny), step):
         if page[x+i:x+i+step] != page[y+i:y+i+step]:
@@ -16,22 +15,18 @@ def suffix_array(page):
     return sorted(range(len(page)+1), cmp=lambda x, y: internal_cmp(page, x, y))
 
 
-def _num_same(s1, s2):
-    """ Lib function presumably call C so for now this is faster than using a loop. """
-    mil = min(len(s1), len(s2))
-    m2 = (mil + 1) / 2
-    if m2 <= 0:
-        return 0
-    if s1[:m2] == s2[:m2]:
-        return m2 + _num_same(s1[m2:], s2[m2:])
-    else:
-        return _num_same(s1[:m2 - 1], s2[:m2 - 1])
+def internal_num_same(page, x, y):
+    lenx, leny = len(page) - x, len(page) - y
+    for i in range(min(lenx, leny)):
+        if page[x+i] != page[y+i]:
+            return i
+    return min(lenx, leny)
 
 
 def lcp_array(page, _suffix_array):
     lcp = [0] * len(_suffix_array)
     for i in range(1, len(_suffix_array)):
-        lcp[i] = _num_same(page[_suffix_array[i-1]:], page[_suffix_array[i]:])
+        lcp[i] = internal_num_same(page, _suffix_array[i-1], _suffix_array[i])
     return lcp
 
 
@@ -56,7 +51,7 @@ def largetest():
     print '-----------largetest------------------'
     #with open("/home/david/.cache/ff_searcher/1299603596466798048/1", "r") as f:
     #    st = f.read()[40330:75000].replace('<b>', '').replace('</b>', '')
-    with open("only_search.html", "r") as f:
+    with open("search.html", "r") as f:
         st = f.read().replace('<b>', '').replace('</b>', '')
     pats = []
     for i in range(150):
