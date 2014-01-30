@@ -1,23 +1,6 @@
 import bisect
 
 
-def rad_sort_suffix_array(page, sa=None, i=0):
-    if sa is None:
-        sa = range(len(page))
-    if len(sa) <= 1:
-        return sa
-    b = [[] for _ in range(255)]
-    r = []
-    for e in sa:
-        if e + i >= len(page):
-            r.append(e)
-        else:
-            b[ord(page[e+i])].append(e)
-    for e in b:
-        r += rad_sort_suffix_array(page, e, i+1)
-    return r
-
-
 def internal_cmp(page, x, y, step=20000):
     """ Buffer so it works nicely """
     lenx = len(page) - x
