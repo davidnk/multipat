@@ -1,19 +1,23 @@
 from patternfind import internal_cmp, suffix_array, lcp_array, pattern_to_remove
 from nose.tools import assert_true
+import time
+import random
 
 
-def speedtest():
-    import random
+def test_speed():
     p = ['b', 'a']*100000
     random.shuffle(p)
     p = ''.join(p)
-    print 'START'
+    t = time.time()
     sa = suffix_array(p)
-    print 'DONE: SA'
+    assert_true(time.time() < 5 + t)
+    t = time.time()
     lcp = lcp_array(p, sa)
-    print 'DONE: LCP'
-    print (pattern_to_remove(p, sa, lcp, occ=(2, 18), leng=(5, 100000)))
-    print 'DONE: PAT'
+    assert_true(time.time() < 5 + t)
+    t = time.time()
+    pat = pattern_to_remove(p, sa, lcp, occ=(2, 18), leng=(5, 100000))
+    assert_true(time.time() < 5 + t)
+    t = time.time()
 
 
 def test_accuracy():
@@ -46,5 +50,5 @@ def test_small_input_endtoend():
             pat = max(pat.split('\n'), key=lambda kk: len(kk))
         pats.append(pat)
         st = st.replace(pat, '\n')
-    assert_true(pats == ['</bb><', '<bb>', '>'])
     assert_true(st.replace('\n', '').strip() == 'acatjdogbobmantogo')
+    assert_true(pats == ['</bb><', '<bb>', '>'])
