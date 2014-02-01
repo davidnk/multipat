@@ -64,11 +64,12 @@ def pattern_to_remove(page, sa, lcp, evalfn=(lambda reps, leng: (reps-2)*(leng-2
     return pat
 
 
-def pattern_shading(page, sa, lcp, evalfn=(lambda shade, reps, leng: reps*leng*(leng > 2))):
+def pattern_shading(page, sa, lcp, evalfn, init_shade=0):
+    """ evalfn = lambda prev_shade, reps, leng: new_shade """
     pats = get_repeated_pats(lcp)
-    shades = [0] * len(sa)
+    shades = [init_shade] * len(sa)
     for leng, s1, s2 in pats:
         for s in range(s1, s2):
             for i in range(sa[s], sa[s] + leng):
-                shades[i] += evalfn(shades[i], s2-s1, leng)
+                shades[i] = evalfn(shades[i], s2-s1, leng)
     return shades
