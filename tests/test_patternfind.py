@@ -4,6 +4,16 @@ import time
 import random
 
 
+def makelambda(o1, o2, l1, l2):
+    def fn(occ, leng):
+        if not o1 <= occ <= o2:
+            return -1
+        if not l1 <= leng <= l2:
+            return -1
+        return occ * leng
+    return fn
+
+
 def test_speed():
     p = ['b', 'a']*100000
     random.shuffle(p)
@@ -15,7 +25,7 @@ def test_speed():
     lcp = lcp_array(p, sa)
     assert_true(time.time() < 5 + t)
     t = time.time()
-    pat = pattern_to_remove(p, sa, lcp, occ=(2, 18), leng=(5, 100000))
+    pattern_to_remove(p, sa, lcp, makelambda(2, 18, 5, 100000))
     assert_true(time.time() < 5 + t)
     t = time.time()
 
@@ -30,9 +40,9 @@ def test_accuracy():
         assert_true(internal_cmp('appleappee', 5, 0, step) == cmp('appee', 'apple'))
     p = 'banana'
     sa = suffix_array(p)
-    assert_true(sa == [6, 5, 3, 1, 0, 4, 2])
+    assert_true(sa == [5, 3, 1, 0, 4, 2])
     lcp = lcp_array(p, sa)
-    assert_true(lcp == [0, 0, 1, 3, 0, 0, 2])
+    assert_true(lcp == [0, 1, 3, 0, 0, 2])
 
 
 def test_small_input_endtoend():
@@ -45,7 +55,7 @@ def test_small_input_endtoend():
     for i in range(3):
         sa = suffix_array(st)
         lcp = lcp_array(st, suffix_array(st))
-        pat = pattern_to_remove(st, sa, lcp, (3, 6), (2, float('inf')))
+        pat = pattern_to_remove(st, sa, lcp, makelambda(3, 6, 2, float('inf')))
         if '\n' in pat:
             pat = max(pat.split('\n'), key=lambda kk: len(kk))
         pats.append(pat)

@@ -11,16 +11,16 @@ def internal_cmp(page, x, y, step=100):
     return 0
 
 
-def suffix_array(page):
-    return sorted(range(len(page)+1), cmp=lambda x, y: internal_cmp(page, x, y))
-
-
 def internal_num_same(page, x, y):
     lenx, leny = len(page) - x, len(page) - y
     for i in range(min(lenx, leny)):
         if page[x+i] != page[y+i]:
             return i
     return min(lenx, leny)
+
+
+def suffix_array(page):
+    return sorted(range(len(page)), cmp=lambda x, y: internal_cmp(page, x, y))
 
 
 def lcp_array(page, _suffix_array):
@@ -30,18 +30,45 @@ def lcp_array(page, _suffix_array):
     return lcp
 
 
-def pattern_to_remove(page, sa, lcp, occ=(2, float('inf')), leng=(2, float('inf'))):
-    def get_max_rep_chars():
-        m = (-1, -1, -1, -1, -1)
-        fr = []
-        for i in range(1, len(lcp) + 1):
-            at = bisect.bisect_left(fr, (lcp[i], 0)) if i != len(lcp) else 0
-            for v, vi in fr[at:]:
-                if (occ[0] <= i - vi <= occ[1] and leng[0] <= v <= leng[1]):
-                    m = max(m, (v * (i - vi), i - vi, v, vi, i))
-            if i != len(lcp):
-                fr[at:] = [(lcp[i], fr[at][1] if len(fr) > at else i - 1)]
-        return (m[2], m[3])
-    v, vi = get_max_rep_chars()
-    pat = page[sa[vi]:sa[vi]+v] if v >= 0 else ''
+def suffix_array_and_lcp(page):
+    sa = suffix_array(page)
+    lcp = lcp_array(page, sa)
+    return sa, lcp
+
+
+def get_repeated_pats(lcp):
+    """ Returns a list of repeated patterns of the form (leng, suf1, suf2) such that
+    all suffixes associated with suffix_array[prev:cur] have a common prefix of length leng.
+    No sub-patterns are included:
+        (_l, _s1, _s2) is a sub-pattern of (l, s1, s2) if
+         ((_l, _s1, _s2) != (l, s1, s2)) and (_l<=l and s1<=_s1<=s2 and s1<=_s1<=s2))"""
+    def add_pats(pats, fr_after, cur):
+        for leng, prev in fr_after:
+            pats.append((leng, prev, cur))
+    fr = []  # (min(lcp[index:i]), index)
+    pats = []
+    for i in range(1, len(lcp)):
+        at = bisect.bisect_left(fr, (lcp[i], 0))
+        if at < len(fr):
+            add_pats(pats, fr[at + (fr[at][0] == lcp[i]):], i)
+        fr[at:] = [(lcp[i], fr[at][1] if len(fr) > at else i - 1)]
+    add_pats(pats, fr, len(lcp))
+    return pats
+
+
+def pattern_to_remove(page, sa, lcp, evalfn=(lambda reps, leng: (reps-2)*(leng-2))):
+    pat_val = lambda p: evalfn(p[2]-p[1], p[0])
+    pat = max(get_repeated_pats(lcp), key=pat_val)
+    leng, prev = pat[0], pat[1]
+    pat = page[sa[prev]:sa[prev]+leng] if pat_val(pat) >= 0 else ''
     return pat
+
+
+def pattern_shading(page, sa, lcp, evalfn=(lambda shade, reps, leng: reps*leng*(leng > 2))):
+    pats = get_repeated_pats(lcp)
+    shades = [0] * len(sa)
+    for leng, s1, s2 in pats:
+        for s in range(s1, s2):
+            for i in range(sa[s], sa[s] + leng):
+                shades[i] += evalfn(shades[i], s2-s1, leng)
+    return shades
