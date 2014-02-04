@@ -61,6 +61,12 @@ def test_small_input_endtoend():
     st += '<bb>j</bb><dog>\n'
     st += '<bb>bob</bb><man>\n'
     st += '<bb>to</bb><go>\n'
+    st2 = st
+    sa, lcp = suffix_array_and_lcp(st2)
+    shadefn = lambda sh, reps, leng: max(sh, int(reps >= 3 and leng >= 2))
+    shading = pattern_shading(sa, lcp, shadefn)
+    st2 = map_with_shading(st2, shading, lambda s, sh, i: '' if sh[i] else s[i])
+    assert_true(st2.replace('\n', '').strip() == 'acatjdogbobmantogo')
     pats = []
     for i in range(3):
         sa = suffix_array(st)

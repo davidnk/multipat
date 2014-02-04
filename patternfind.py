@@ -1,38 +1,38 @@
 import bisect
 
 
-def internal_cmp(page, x, y, step=100):
+def internal_cmp(s, x, y, step=100):
     """ Buffer so it works nicely. """
-    lenx, leny = len(page) - x, len(page) - y
+    lenx, leny = len(s) - x, len(s) - y
     i = 0
     for i in range(0, max(lenx, leny), step):
-        if page[x+i:x+i+step] != page[y+i:y+i+step]:
-            return -1 if page[x+i:x+i+step] < page[y+i:y+i+step] else 1
+        if s[x+i:x+i+step] != s[y+i:y+i+step]:
+            return -1 if s[x+i:x+i+step] < s[y+i:y+i+step] else 1
     return 0
 
 
-def internal_num_same(page, x, y):
-    lenx, leny = len(page) - x, len(page) - y
+def internal_num_same(s, x, y):
+    lenx, leny = len(s) - x, len(s) - y
     for i in range(min(lenx, leny)):
-        if page[x+i] != page[y+i]:
+        if s[x+i] != s[y+i]:
             return i
     return min(lenx, leny)
 
 
-def suffix_array(page):
-    return sorted(range(len(page)), cmp=lambda x, y: internal_cmp(page, x, y))
+def suffix_array(s):
+    return sorted(range(len(s)), cmp=lambda x, y: internal_cmp(s, x, y))
 
 
-def lcp_array(page, _suffix_array):
+def lcp_array(s, _suffix_array):
     lcp = [0] * len(_suffix_array)
     for i in range(1, len(_suffix_array)):
-        lcp[i] = internal_num_same(page, _suffix_array[i-1], _suffix_array[i])
+        lcp[i] = internal_num_same(s, _suffix_array[i-1], _suffix_array[i])
     return lcp
 
 
-def suffix_array_and_lcp(page):
-    sa = suffix_array(page)
-    lcp = lcp_array(page, sa)
+def suffix_array_and_lcp(s):
+    sa = suffix_array(s)
+    lcp = lcp_array(s, sa)
     return sa, lcp
 
 
@@ -70,15 +70,15 @@ def patterns(sa, lcp):
     return pats
 
 
-def max_pattern(page, sa, lcp, evalfn=(lambda reps, leng: (reps-2)*(leng-2))):
+def max_pattern(s, sa, lcp, evalfn=(lambda reps, leng: (reps-2)*(leng-2))):
     pat_val = lambda p: evalfn(p[2]-p[1], p[0])
     pat = max(patterns(sa, lcp), key=pat_val)
     leng, prev = pat[0], pat[1]
-    pat = page[sa[prev]:sa[prev]+leng] if pat_val(pat) >= 0 else ''
+    pat = s[sa[prev]:sa[prev]+leng] if pat_val(pat) >= 0 else ''
     return pat
 
 
-def pattern_shading(page, sa, lcp, shadefn, init_shade=0):
+def pattern_shading(sa, lcp, shadefn, init_shade=0):
     """ shadefn = lambda prev_shade, reps, leng: new_shade """
     pats = patterns(sa, lcp)
     shades = [init_shade] * len(sa)
@@ -89,9 +89,9 @@ def pattern_shading(page, sa, lcp, shadefn, init_shade=0):
     return shades
 
 
-def map_with_shading(st, shading, symfn):
-    """ returns a string formed by symfn(st, shading, char_index) at each index of st. """
-    return ''.join([symfn(st, shading, i) for i in range(len(st))])
+def map_with_shading(s, shading, symfn):
+    """ returns a string formed by symfn(s, shading, char_index) at each index of s. """
+    return ''.join([symfn(s, shading, i) for i in range(len(s))])
 
 
 def split_to_repeated_sections(st, ):

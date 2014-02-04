@@ -7,7 +7,7 @@ import requests
 def change_by_shade(st, shadefn, symfn):
     """ returns a string formed by symfn(st, shades, char_index) at each index of st. """
     sa, lcp = suffix_array_and_lcp(st)
-    shading = pattern_shading(st, sa, lcp, shadefn)
+    shading = pattern_shading(sa, lcp, shadefn)
     return map_with_shading(st, shading, symfn)
 
 
