@@ -1,5 +1,5 @@
 from __future__ import print_function, division
-from patternfind import suffix_array_and_pats, pattern_shading, map_with_shading
+from multipat import suffix_array_and_pats, pattern_shading, map_with_shading
 import random
 import requests
 

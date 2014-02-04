@@ -1,4 +1,4 @@
-from patternfind import *
+from multipat import *
 from nose.tools import assert_true
 import time
 import random
