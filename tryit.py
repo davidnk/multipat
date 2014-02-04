@@ -1,13 +1,13 @@
 from __future__ import print_function, division
-from patternfind import suffix_array_and_lcp, pattern_shading, map_with_shading
+from patternfind import suffix_array_and_pats, pattern_shading, map_with_shading
 import random
 import requests
 
 
 def change_by_shade(st, shadefn, symfn):
     """ returns a string formed by symfn(st, shades, char_index) at each index of st. """
-    sa, lcp = suffix_array_and_lcp(st)
-    shading = pattern_shading(sa, lcp, shadefn)
+    sa, pats = suffix_array_and_pats(st)
+    shading = pattern_shading(sa, pats, shadefn)
     return map_with_shading(st, shading, symfn)
 
 

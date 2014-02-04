@@ -30,10 +30,11 @@ def lcp_array(s, _suffix_array):
     return lcp
 
 
-def suffix_array_and_lcp(s):
+def suffix_array_and_pats(s):
     sa = suffix_array(s)
     lcp = lcp_array(s, sa)
-    return sa, lcp
+    pats = patterns(sa, lcp)
+    return sa, pats
 
 
 def patterns(sa, lcp):
@@ -70,17 +71,16 @@ def patterns(sa, lcp):
     return pats
 
 
-def max_pattern(s, sa, lcp, evalfn=(lambda reps, leng: (reps-2)*(leng-2))):
+def max_pattern(s, sa, pats, evalfn=(lambda reps, leng: (reps-2)*(leng-2))):
     pat_val = lambda p: evalfn(p[2]-p[1], p[0])
-    pat = max(patterns(sa, lcp), key=pat_val)
+    pat = max(pats, key=pat_val)
     leng, prev = pat[0], pat[1]
     pat = s[sa[prev]:sa[prev]+leng] if pat_val(pat) >= 0 else ''
     return pat
 
 
-def pattern_shading(sa, lcp, shadefn, init_shade=0):
+def pattern_shading(sa, pats, shadefn, init_shade=0):
     """ shadefn = lambda prev_shade, reps, leng: new_shade """
-    pats = patterns(sa, lcp)
     shades = [init_shade] * len(sa)
     for leng, s1, s2 in pats:
         for s in range(s1, s2):
@@ -97,3 +97,23 @@ def map_with_shading(s, shading, symfn):
 def split_to_repeated_sections(st, ):
     """ Return a set of ranges inside st, that all have similar structure. """
     pass
+
+
+class Pats(object):
+    def __init__(self, string):
+        self.string = string
+        self.suffix_array, self._patterns = suffix_array_and_pats(string)
+
+    def patterns(self):
+        return list(self._patterns)
+
+    def shading(self, shadefn, init_shade=0):
+        return pattern_shading(self.suffix_array, self._patterns, shadefn, init_shade)
+
+    def maxpat(self, evalfn):
+        return max_pattern(self.string, self.suffix_array, self._patterns, evalfn)
+
+    def map_with_shading(self, shading, symfn):
+        if hasattr(shading, '__call__'):
+            shading = self.shading(shading)
+        return ''.join([symfn(self.string, shading, i) for i in range(len(self.string))])

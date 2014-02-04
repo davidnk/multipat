@@ -25,7 +25,7 @@ def test_speed():
     lcp = lcp_array(p, sa)
     assert_true(time.time() < 5 + t)
     t = time.time()
-    max_pattern(p, sa, lcp, makelambda(2, 18, 5, 100000))
+    patterns(sa, lcp)
     assert_true(time.time() < 5 + t)
     t = time.time()
 
@@ -50,8 +50,8 @@ def test_sa_and_lcp():
 
 def test_patterns():
     st = 'cat, dog: catdogcatdog!'
-    sa, lcp = suffix_array_and_lcp(st)
-    pats = [st[sa[p[1]]:sa[p[1]]+p[0]] for p in patterns(sa, lcp)]
+    sa, pats = suffix_array_and_pats(st)
+    pats = [st[sa[p[1]]:sa[p[1]]+p[0]] for p in pats]
     assert_true('|'.join(sorted(pats, key=lambda k: -len(k))) == 'catdog|cat|dog| |')
 
 
@@ -62,19 +62,18 @@ def test_small_input_endtoend():
     st += '<bb>bob</bb><man>\n'
     st += '<bb>to</bb><go>\n'
     st2 = st
-    sa, lcp = suffix_array_and_lcp(st2)
+    sa, pats = suffix_array_and_pats(st2)
     shadefn = lambda sh, reps, leng: max(sh, int(reps >= 3 and leng >= 2))
-    shading = pattern_shading(sa, lcp, shadefn)
+    shading = pattern_shading(sa, pats, shadefn)
     st2 = map_with_shading(st2, shading, lambda s, sh, i: '' if sh[i] else s[i])
     assert_true(st2.replace('\n', '').strip() == 'acatjdogbobmantogo')
-    pats = []
+    maxpats = []
     for i in range(3):
-        sa = suffix_array(st)
-        lcp = lcp_array(st, suffix_array(st))
-        pat = max_pattern(st, sa, lcp, makelambda(3, 6, 2, float('inf')))
+        sa, pats = suffix_array_and_pats(st)
+        pat = max_pattern(st, sa, pats, makelambda(3, 6, 2, float('inf')))
         if '\n' in pat:
             pat = max(pat.split('\n'), key=lambda kk: len(kk))
-        pats.append(pat)
+        maxpats.append(pat)
         st = st.replace(pat, '\n')
     assert_true(st.replace('\n', '').strip() == 'acatjdogbobmantogo')
-    assert_true(pats == ['</bb><', '<bb>', '>'])
+    assert_true(maxpats == ['</bb><', '<bb>', '>'])
