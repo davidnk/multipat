@@ -36,47 +36,64 @@ def suffix_array_and_lcp(page):
     return sa, lcp
 
 
-def get_repeated_pats(lcp):
+def patterns(sa, lcp):
     """ Returns a list of repeated patterns of the form (leng, suf1, suf2) such that
     all suffixes associated with suffix_array[prev:cur] have a common prefix of length leng.
     No sub-patterns are included:
-        (_l, _s1, _s2) is a sub-pattern of (l, s1, s2) if
-         ((_l, _s1, _s2) != (l, s1, s2)) and (_l<=l and s1<=_s1<=s2 and s1<=_s1<=s2))"""
-    def add_pats(pats, fr_after, cur):
+        _p = (_l, _s1, _s2) is a sub-pattern of p = (l, s1, s2) if
+        p != _p and sa[s1] <= sa[_s1] and sa[_s2] <= sa[s2] and _l <= l and _s2 - _s1 <= s2 - s1
+    """
+    def add_pats(patmap, fr_after, cur):
         for leng, prev in fr_after:
-            pats.append((leng, prev, cur))
+            first_end_index = sa[prev] + leng
+            if first_end_index not in patmap:
+                patmap[first_end_index] = []
+            patmap[first_end_index].append((leng, prev, cur))
     fr = []  # (min(lcp[index:i]), index)
-    pats = []
+    # first_end_pos -> pattern len, first sa index prefixed by pattern, last sa index _ 1
+    patmap = {}
     for i in range(1, len(lcp)):
         at = bisect.bisect_left(fr, (lcp[i], 0))
         if at < len(fr):
-            add_pats(pats, fr[at + (fr[at][0] == lcp[i]):], i)
+            add_pats(patmap, fr[at + (fr[at][0] == lcp[i]):], i)
         fr[at:] = [(lcp[i], fr[at][1] if len(fr) > at else i - 1)]
-    add_pats(pats, fr, len(lcp))
+    add_pats(patmap, fr, len(lcp))
+    pats = []
+    for kpats in patmap.values():
+        kpats.sort(key=lambda p: p[0], reverse=True)
+        prev_reps = 0
+        for (leng, s1, s2) in kpats:
+            reps = s2 - s1
+            if reps > prev_reps:
+                pats.append((leng, s1, s2))
+            prev_reps = reps
     return pats
 
 
-def pattern_to_remove(page, sa, lcp, evalfn=(lambda reps, leng: (reps-2)*(leng-2))):
+def max_pattern(page, sa, lcp, evalfn=(lambda reps, leng: (reps-2)*(leng-2))):
     pat_val = lambda p: evalfn(p[2]-p[1], p[0])
-    pat = max(get_repeated_pats(lcp), key=pat_val)
+    pat = max(patterns(sa, lcp), key=pat_val)
     leng, prev = pat[0], pat[1]
     pat = page[sa[prev]:sa[prev]+leng] if pat_val(pat) >= 0 else ''
     return pat
 
 
 def pattern_shading(page, sa, lcp, shadefn, init_shade=0):
-    """ evalfn = lambda prev_shade, reps, leng: new_shade """
-    pats = get_repeated_pats(lcp)
+    """ shadefn = lambda prev_shade, reps, leng: new_shade """
+    pats = patterns(sa, lcp)
     shades = [init_shade] * len(sa)
     for leng, s1, s2 in pats:
         for s in range(s1, s2):
             for i in range(sa[s], sa[s] + leng):
-                shades[i] = evalfn(shades[i], s2-s1, leng)
+                shades[i] = shadefn(shades[i], s2-s1, leng)
     return shades
 
 
-def change_by_shade(st, shadefn, symfn):
-    """ returns a string formed by symfn(st, shades, char_index) at each index of st. """
-    sa, lcp = suffix_array_and_lcp(st)
-    shades = pattern_shading(st, sa, lcp, ftn)
-    return ''.join([symfn(st, shades, i) for i in range(len(st))])
+def map_with_shading(st, shading, symfn):
+    """ returns a string formed by symfn(st, shading, char_index) at each index of st. """
+    return ''.join([symfn(st, shading, i) for i in range(len(st))])
+
+
+def split_to_repeated_sections(st, ):
+    """ Return a set of ranges inside st, that all have similar structure. """
+    pass
