@@ -1,6 +1,3 @@
-import bisect
-
-
 def internal_cmp(s, x, y, step=100):
     """ Buffer so it works nicely. """
     lenx, leny = len(s) - x, len(s) - y
@@ -44,21 +41,23 @@ def patterns(sa, lcp):
         _p = (_l, _s1, _s2) is a sub-pattern of p = (l, s1, s2) if
         p != _p and sa[s1] <= sa[_s1] and sa[_s2] <= sa[s2] and _l <= l and _s2 - _s1 <= s2 - s1
     """
-    def add_pats(patmap, fr_after, cur):
-        for leng, prev in fr_after:
-            first_end_index = sa[prev] + leng
-            if first_end_index not in patmap:
-                patmap[first_end_index] = []
-            patmap[first_end_index].append((leng, prev, cur))
+    def add_pat(patmap, (leng, prev), cur):
+        first_end_index = sa[prev] + leng
+        if first_end_index not in patmap:
+            patmap[first_end_index] = []
+        patmap[first_end_index].append((leng, prev, cur))
     fr = []  # (min(lcp[index:i]), index)
     # first_end_pos -> pattern len, first sa index prefixed by pattern, last sa index _ 1
     patmap = {}
     for i in range(1, len(lcp)):
-        at = bisect.bisect_left(fr, (lcp[i], 0))
-        if at < len(fr):
-            add_pats(patmap, fr[at + (fr[at][0] == lcp[i]):], i)
-        fr[at:] = [(lcp[i], fr[at][1] if len(fr) > at else i - 1)]
-    add_pats(patmap, fr, len(lcp))
+        while fr and fr[-1][0] > lcp[i]:
+            add_pat(patmap, fr.pop(), i)
+        if not fr or fr[-1][0] < lcp[i]:
+            fr.append((lcp[i], i - 1))
+        else:
+            fr[-1] = (lcp[i], fr[-1][1])
+    while fr:
+        add_pat(patmap, fr.pop(), len(lcp))
     pats = []
     for kpats in patmap.values():
         kpats.sort(key=lambda p: p[0], reverse=True)
