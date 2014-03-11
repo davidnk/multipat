@@ -1,5 +1,5 @@
 from multipat import *
-from nose.tools import assert_true
+from nose.tools import assert_true, assert_equal
 import time
 import random
 
@@ -32,27 +32,27 @@ def test_speed():
 
 def test_internal_cmp():
     for step in range(1, 15):
-        assert_true(internal_cmp('hello', 0, 5, step) == cmp('hello', ''))
-        assert_true(internal_cmp('hello', 0, 6, step) == cmp('hello', ''))
-        assert_true(internal_cmp('appleappl', 0, 5, step) == cmp('apple', 'appl'))
-        assert_true(internal_cmp('applebpple', 0, 5, step) == cmp('apple', 'bpple'))
-        assert_true(internal_cmp('appleappee', 0, 5, step) == cmp('apple', 'appee'))
-        assert_true(internal_cmp('appleappee', 5, 0, step) == cmp('appee', 'apple'))
+        assert_equal(internal_cmp('hello', 0, 5, step), cmp('hello', ''))
+        assert_equal(internal_cmp('hello', 0, 6, step), cmp('hello', ''))
+        assert_equal(internal_cmp('appleappl', 0, 5, step), cmp('apple', 'appl'))
+        assert_equal(internal_cmp('applebpple', 0, 5, step), cmp('apple', 'bpple'))
+        assert_equal(internal_cmp('appleappee', 0, 5, step), cmp('apple', 'appee'))
+        assert_equal(internal_cmp('appleappee', 5, 0, step), cmp('appee', 'apple'))
 
 
 def test_sa_and_lcp():
     p = 'banana'
     sa = suffix_array(p)
-    assert_true(sa == [5, 3, 1, 0, 4, 2])
+    assert_equal(sa, [5, 3, 1, 0, 4, 2])
     lcp = lcp_array(p, sa)
-    assert_true(lcp == [0, 1, 3, 0, 0, 2])
+    assert_equal(lcp, [0, 1, 3, 0, 0, 2])
 
 
 def test_patterns():
     st = 'cat, dog: catdogcatdog!'
     sa, pats = suffix_array_and_pats(st)
     pats = [st[sa[p[1]]:sa[p[1]]+p[0]] for p in pats]
-    assert_true('|'.join(sorted(pats, key=lambda k: -len(k))) == 'catdog|cat|dog| |')
+    assert_equal('|'.join(sorted(pats, key=lambda k: (-len(k), k))), 'catdog|cat|dog| |')
 
 
 def test_small_input_endtoend():
@@ -66,7 +66,7 @@ def test_small_input_endtoend():
     shadefn = lambda sh, reps, leng: max(sh, int(reps >= 3 and leng >= 2))
     shading = pattern_shading(sa, pats, shadefn)
     st2 = map_with_shading(st2, shading, lambda s, sh, i: '' if sh[i] else s[i])
-    assert_true(st2.replace('\n', '').strip() == 'acatjdogbobmantogo')
+    assert_equal(st2.replace('\n', '').strip(), 'acatjdogbobmantogo')
     maxpats = []
     for i in range(3):
         sa, pats = suffix_array_and_pats(st)
@@ -75,5 +75,5 @@ def test_small_input_endtoend():
             pat = max(pat.split('\n'), key=lambda kk: len(kk))
         maxpats.append(pat)
         st = st.replace(pat, '\n')
-    assert_true(st.replace('\n', '').strip() == 'acatjdogbobmantogo')
-    assert_true(maxpats == ['</bb><', '<bb>', '>'])
+    assert_equal(st.replace('\n', '').strip(), 'acatjdogbobmantogo')
+    assert_equal(maxpats, ['</bb><', '<bb>', '>'])
